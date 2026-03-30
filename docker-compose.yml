@@ -4,6 +4,7 @@ services:
     environment:
       POSTGRES_DB: wtf_livepulse
       POSTGRES_USER: wtf
+      # Avoid hardcoded passwords in the repo.
       POSTGRES_HOST_AUTH_METHOD: trust
     volumes:
       - postgres_data:/var/lib/postgresql/data

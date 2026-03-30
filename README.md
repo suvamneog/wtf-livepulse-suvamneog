@@ -12,7 +12,7 @@ docker compose up --build
 
 - **Frontend:** http://localhost:3000  
 - **Backend API / WebSocket:** proxied via the frontend container (`/api`, `/ws`)  
-- **Postgres (host dev only):** `localhost:5432`, database `wtf_livepulse`, user `wtf`, password `REDACTED`
+- **Postgres (host dev only):** `localhost:5432`, database `wtf_livepulse`, user `wtf` (passwordless `trust` auth in Docker)
 
 First boot runs SQL from `backend/src/db/migrations` in Postgres, then the backend runs an **idempotent seed** (gyms, 5k members, ~270k check-ins, payments, activity feed seed) and starts the anomaly job + optional materialized-view refresh.
 
