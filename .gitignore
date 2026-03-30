@@ -1,8 +1,25 @@
+# Dependencies
 node_modules/
-dist/
-coverage/
+
+# Environment — never commit secrets (templates are allowed)
 .env
+.env.*
+!.env.example
+!.env.sample
+
+# Build / test output
+dist/
+build/
+coverage/
 *.log
-.DS_Store
+
+# Playwright
 playwright-report/
 test-results/
+
+# OS / editor
+.DS_Store
+.idea/
+
+# Vite (if extracted outside node_modules)
+.vite/
