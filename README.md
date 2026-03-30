@@ -57,12 +57,12 @@ Run against the **seeded** database in `psql` (see assignment for exact `EXPLAIN
 
 | Query | Target (guide) | Index / object |
 |-------|----------------|----------------|
-| Q1 Live occupancy (single gym) | &lt; 0.5 ms | `idx_checkins_live_occupancy` (actual: 0.205 ms) |
-| Q2 Today’s revenue (single gym) | &lt; 0.8 ms | `idx_payments_gym_date` (actual: 0.286 ms) |
-| Q3 Churn risk actives | &lt; 1 ms | `idx_members_churn_risk` (actual: 0.313 ms) |
-| Q4 Heatmap (7d) | &lt; 0.3 ms | `gym_hourly_stats` (+ unique index) (actual: 0.223 ms) |
-| Q5 Cross-gym 30d revenue | &lt; 2 ms | `idx_payments_date` (actual: 1.344 ms) |
-| Q6 Active anomalies | &lt; 0.3 ms | `idx_anomalies_active` (actual: 0.132 ms) |
+| Q1 Live occupancy (single gym) | &lt; 0.5 ms | `idx_checkins_live_occupancy` (actual: 0.136 ms) |
+| Q2 Today’s revenue (single gym) | &lt; 0.8 ms | `idx_payments_gym_date` (actual: 0.086 ms) |
+| Q3 Churn risk actives | &lt; 1 ms | `idx_members_churn_risk` (actual: 0.571 ms) |
+| Q4 Heatmap (7d) | &lt; 0.3 ms | `gym_hourly_stats` (+ unique index) (actual: 0.076 ms) |
+| Q5 Cross-gym 30d revenue | &lt; 2 ms | `idx_payments_date` (actual: 0.450 ms) |
+| Q6 Active anomalies | &lt; 0.3 ms | `idx_anomalies_active` (actual: 0.057 ms) |
 
 *Populate measured timings in your own run and attach screenshots before submission.*
 
