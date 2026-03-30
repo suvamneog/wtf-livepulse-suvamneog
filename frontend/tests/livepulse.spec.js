@@ -30,7 +30,7 @@ test.describe("WTF LivePulse E2E", () => {
     const feed = page.getByTestId("activity-feed");
     await expect(feed).toBeVisible();
     await expect(
-      feed.getByText(/CHECKIN|CHECKOUT|PAYMENT/)
+      feed.getByText(/CHECKIN|CHECKOUT|PAYMENT/).first()
     ).toBeVisible({ timeout: 2000 });
   });
 });
