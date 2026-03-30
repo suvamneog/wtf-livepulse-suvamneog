@@ -157,35 +157,51 @@ async function insertMembers(client, gymByName) {
   for (const spec of GYM_ROWS) {
     const gymId = gymByName.get(spec.name);
     const n = spec.memberCount;
-    const nActive = Math.floor(n * spec.activePct);
-    const nInactive = Math.floor(n * 0.08);
-    const nFrozen = Math.floor(n * 0.04);
-    let nOther = n - nActive - nInactive - nFrozen;
-    while (nOther < 0) {
-      nOther++;
+    // Shuffle helper (keeps slot arrays exactly length `n`).
+    function shuffleInPlace(a) {
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
     }
-    const statusSlots = [];
-    for (let i = 0; i < nActive; i++) statusSlots.push("active");
-    for (let i = 0; i < nInactive; i++) statusSlots.push("inactive");
-    for (let i = 0; i < nFrozen; i++) statusSlots.push("frozen");
-    for (let i = 0; i < nOther; i++) statusSlots.push("active");
-    while (statusSlots.length < n) statusSlots.push("active");
-    statusSlots.sort(() => Math.random() - 0.5);
+
+    // Use the spec's `activePct` as the source of truth for counts, then split the remainder
+    // into inactive:frozen in a 2:1 ratio (to match the pdf's fixed remainder intent).
+    const nActive = Math.round(n * spec.activePct);
+    const remainder = n - nActive;
+    const nInactive = Math.round(remainder * (2 / 3));
+    const nFrozen = remainder - nInactive;
+
+    const statusSlots = [
+      ...Array(nActive).fill("active"),
+      ...Array(nInactive).fill("inactive"),
+      ...Array(nFrozen).fill("frozen"),
+    ];
+    shuffleInPlace(statusSlots);
+
+    // Member_type (renewal vs new): make the 80/20 split deterministic per gym.
+    const renewalCount = Math.round(n * 0.2);
+    const memberTypeSlots = [
+      ...Array(renewalCount).fill("renewal"),
+      ...Array(n - renewalCount).fill("new"),
+    ];
+    shuffleInPlace(memberTypeSlots);
 
     const now = Date.now();
     const dayMs = 24 * 60 * 60 * 1000;
     for (let i = 0; i < n; i++) {
       const status = statusSlots[i];
-      const isRenewal = Math.random() < 0.2;
-      const member_type = isRenewal ? "renewal" : "new";
+      const member_type = memberTypeSlots[i];
       let joined_at;
-      if (isRenewal) {
+      if (member_type === "renewal") {
         joined_at = new Date(
           now - randInt(91, 180) * dayMs - randInt(0, 86400000)
         );
       } else if (status === "active") {
         joined_at = new Date(
-          now - randInt(0, 90) * dayMs - randInt(0, 86400000)
+          // Keep active (non-renewal) members older so 30-day revenue targets match the pdf.
+          now - randInt(27, 90) * dayMs - randInt(0, 86400000)
         );
       } else {
         joined_at = new Date(
@@ -343,7 +359,9 @@ export async function runSeed() {
       for (const gym of gymMeta) {
         const parts = toIstParts(dayUtc);
         const dowM = DOW_MULT[parts.dow];
-        const base = Math.floor(300 * dowM * (0.85 + Math.random() * 0.25));
+        // Historically, this seed aimed around ~270k historical check-ins.
+        // The pdf's rejection rules are strict, so we bias higher than the baseline.
+        const base = Math.floor(550 * dowM * (0.85 + Math.random() * 0.25));
         for (let k = 0; k < base && inserted < targetHistorical; k++) {
           const list = byGym.get(gym.id) || [];
           if (!list.length) continue;
@@ -388,6 +406,10 @@ export async function runSeed() {
 
     await client.query(`DELETE FROM checkins WHERE checked_out IS NULL`);
 
+    // Avoid overwriting churn-risk members with recent open-session check-ins.
+    // Otherwise, `last_checkin_at` becomes "recent" and they stop matching the pdf's churn predicate.
+    const churnRiskMembers = new Set([...churnHigh, ...churnCrit]);
+
     const openRows = [];
     for (const gym of gymMeta) {
       const [lo, hi] = gym.openCheckinsRange;
@@ -398,7 +420,7 @@ export async function runSeed() {
             ? randInt(lo, hi)
             : randInt(lo, hi);
       const list = (byGym.get(gym.id) || []).filter(
-        (m) => m.status === "active"
+        (m) => m.status === "active" && !churnRiskMembers.has(m.id)
       );
       const used = new Set();
       let added = 0;

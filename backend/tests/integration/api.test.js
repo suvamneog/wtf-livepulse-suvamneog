@@ -7,6 +7,7 @@ import { app } from "../../src/app.js";
 import { pool, waitForDb } from "../../src/db/pool.js";
 import { runSeed } from "../../src/db/seeds/seed.js";
 import { runAnomalyCycle } from "../../src/services/anomalyService.js";
+import { jest } from "@jest/globals";
 
 jest.setTimeout(180000);
 
